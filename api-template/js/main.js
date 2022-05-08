@@ -9,7 +9,8 @@ function getFetch(){
       .then(res => res.json()) // parse response as JSON
       .then(data => {
         console.log(data)
-        const potentialPet = new Poke (data.name, data.height, data.weight, data.types,data.sprites.other['official-artwork'])
+        const potentialPet = new Poke (data.name, data.height, data.weight,data.types,data.sprites.other['official-artwork'])
+        potentialPet.getTypes()
       })
       .catch(err => {
           console.log(`error ${err}`)
@@ -25,5 +26,13 @@ class Poke {
     this.image = image
     this.housepet = true
     this.reason = []
+    this.typeList = []
+  }
+  
+  getTypes() {
+    for(const property of this.types) {
+      this.typeList.push(property.type.name)
+    }
+    console.log(this.typeList)
   }
 }
