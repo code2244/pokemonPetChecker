@@ -2,14 +2,17 @@
 document.querySelector('button').addEventListener('click', getFetch)
 
 function getFetch(){
-  const choice = document.querySelector('input').value.replaceAll(' ','-').replaceAll('.','').toLowerCase()
+  const choice = document.querySelector('input').value.replaceAll('.','').replaceAll(' ','-').toLowerCase()
+  console.log(choice)
+
   const url = `https://pokeapi.co/api/v2/pokemon/${choice}`     //choice variable 
 
   fetch(url)
       .then(res => res.json()) // parse response as JSON
       .then(data => {
         console.log(data)
-        const potentialPet = new Poke (data.species.name,data.height,data.weight,data.types,data.sprites.other['official-artwork'].front_default,
+
+        const potentialPet = new PokeInfo (data.species.name,data.height,data.weight,data.types,data.sprites.other['official-artwork'].front_default,
           data.location_area_encounters)
 
         potentialPet.getTypes()
@@ -22,13 +25,15 @@ function getFetch(){
           potentialPet.encounterInfo()
           document.getElementById('location').innerText = ''
         } else {
-          decision = `This Pokemon would not be a good pet because ${potentialPet.reason.join(' and ')}.`
+          let reasonStr = potentialPet.reason.join(' and ')
+          decision = `This Pokemon would not be a good pet because ${reasonStr}.`
         }
         document.querySelector('h2').innerText = decision
         document.querySelector('img').src = potentialPet.image
       })
       .catch(err => {
           console.log(`error ${err}`)
+          document.querySelector('h2').innerText = `Pokemon not found. Please try again.`
       });
 }
 
@@ -36,29 +41,22 @@ class Poke {
   constructor (name, height, weight, types, image) {
     this.name = name
     this.height = height
-    this.weight = weight
     this.types = types
+    this.typeList = []
     this.image = image
+    this.weight = weight
     this.housepet = true
     this.reason = []
-    this.typeList = []
   }
   
   getTypes() {
     for(const property of this.types) {
       this.typeList.push(property.type.name)
     }
+  }
    
-  }
 
-  weightToPounds (weight) {
-    return Math.round((weight/4.536)*100)/100
-  }
-
-  heightToFeet (height) {
-    return Math.round((height/3.048)*100)/100
-  }
-
+  
   isItHousepet() {
     //check height, weight, and types
     let badTypes = ['fire', 'electric', 'fighting', 'poison', 'psychic', 'ghost']
@@ -70,15 +68,24 @@ class Poke {
       this.reason.push(`it is too tall at ${this.heightToFeet(this.height)} feet`)
       this.housepet = false
     }
-    if (badTypes.some(r=> this.typeList.indexOf(r) >= 0)){
+    if (badTypes.some(r=> this.typeList.indexOf(r) >= 0)) {
       this.reason.push('its type is too dangerous')
       this.housepet = false
     }
   }
+
+  weightToPounds (weight) {
+   return Math.round((weight/4.536)*100)/100
+  }
+  
+  heightToFeet (height) {
+    return Math.round((height/3.048)*100)/100
+  }
 }
 
+
 class PokeInfo extends Poke {
-  constructor (name,height,weight,types,image,location) {
+  constructor (name, height, weight, types, image, location) {
     super(name, height, weight, types, image)
     this.locationURL = location
     this.locationList = []
@@ -93,20 +100,21 @@ class PokeInfo extends Poke {
         for (const item of data) {
           this.locationList.push(item.location_area.name)
         }
-        let target = document.getElementById('location')
-        target
+        let target = document.getElementById('location');
+        target.innerText = this.locationCleanup()
       })
       .catch(err => {
         console.log(`error ${err}`)
-      })
+      });
+      console.log(this.locationList.join(', '), 'inside of encounters')
   }
 
   locationCleanup() {
-    const words = this.locationList.slice(0,5).join(', ').
-    replaceAll('-','' ).split(" ")
-    for (let i=0; i<words.length; i++){
-      words[i] = words[i][0].toUpperCase() + words[i].slice(1)
+    const words = this.locationList.slice(0,5).join(', ').replaceAll('-',' ' ).split(" ");
+    for (let i = 0; i < words.length; i++){
+      words[i] = words[i][0].toUpperCase() + words[i].slice(1);
     }
+    console.log(words)
     return words.join(' ')
   }
    
